@@ -1,5 +1,6 @@
 # Club news extractor
 # Installation
+- User python3
 >`pip install req.txt`
 # How to run ?
 >`python crawler.py`
