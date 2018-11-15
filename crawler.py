@@ -59,7 +59,7 @@ def extract_url(url):
     resp_content = get_page_html(url)
     page = html.fromstring(resp_content)
     _url = page.xpath(CONFIG['final_url'])
-    if _url > 0:
+    if _url:
         return _url[0]
     return None
 
@@ -72,7 +72,7 @@ def get_club_url():
     list all club with their urls
     '''
 
-    url = 'https: // www.newsnow.co.uk/h/Sport/Football/'\
+    url = 'https://www.newsnow.co.uk/h/Sport/Football/'\
         'Championship/Blackburn+Rovers'
     club = {'name': 'black_robers', 'url': url}
     clubs = []
@@ -89,7 +89,7 @@ def fetch_data(_res_sel):
         for _item in value:
             head[key] = None
             x_val = _res_sel.xpath(_item)
-            if x_val > 0:
+            if x_val:
                 head[key] = x_val[0].strip()
                 break
     head['final_url'] = extract_url(head['raw_link'])
