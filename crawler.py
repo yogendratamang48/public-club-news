@@ -1,3 +1,19 @@
+#! /usr/bin/env python
+'''
+crawler.py - a minimal crawler script to club data from 
+https://www.newsnow.co.uk/h/Sport/Football/Championship/Blackburn+Rovers
+
+Things to do:
+    1. Randomize useragents (or go with fake_user_agent
+    2. Remove those with `Gallery` heading
+    3. Randomize or use proxy in `get_random_proxy` method
+    4. Cron service to run the crawler in every hour or so
+    5. With increase in club links, one should move to asynchronous mode, 
+    6. Async can be done either with `scrapy` or `celery` with `rabbitmq`
+    7. Code is already modular so we only need modify request part
+    8. Application will be scalable if there is database and parse_page
+    implements that more effectively
+'''
 import requests
 import random
 import ast
@@ -11,11 +27,6 @@ ap = argparse.ArgumentParser()
 ap.add_argument("-d", "--debug", required=False,
 	help="start in debug mode")
 
-USER_AGENTS_FILE = 'useragents.txt'
-PROXIES_FILE = 'proxies.txt'
-
-USER_AGENTS = ast.literal_eval(open(USER_AGENTS_FILE).read())
-PROXIES = ast.literal_eval(open(PROXIES_FILE).read())
 
 args = vars(ap.parse_args())
 
@@ -48,8 +59,7 @@ def extract_url(url):
         print("Working in %s" % url)
     except:
         pass
-    header = get_random_header()
-    resp = requests.get(url, headers=header)
+    resp = requests.get(url, headers=HEADER)
     page = html.fromstring(resp.content)
     _url = page.xpath(CONFIG['final_url'])
     if len(_url)>0:
@@ -57,11 +67,18 @@ def extract_url(url):
     return None
 
 def get_club_url():
-    ''' returns list of dictionary of form {'club':'', 'url':''} '''
-    raw_clubs = open('club_links.txt').read()
-    raw_clubs = raw_clubs.split('\n')
-    raw_clubs = [_c for _c in raw_clubs if _c.strip()!='']
-    clubs = [{'name':_c.split('$')[-1], 'url':_c.split('$')[0]} for _c in raw_clubs]
+    ''' returns list of dictionary of form {'club':'', 'url':''} 
+    
+    To Work: 
+        Maintain a list file, say, club_links.txt which will 
+        list all club with their urls
+    '''
+
+    club = {'club':'black_robers',
+         'url':'https://www.newsnow.co.uk/h/Sport/Football/Championship/Blackburn+Rovers'
+        }
+    clubs = []
+    clubs.append(club)
     return clubs
 
     
@@ -80,32 +97,47 @@ def fetch_data(_res_sel):
     head['final_url'] = extract_url(head['raw_link'])
     return head
 
+def get_random_header():
+    '''
+    return random useragent header
+
+    Todo:
+    Maintain list of useragents, say useragents.py and 
+    read them randomly
+    '''
+    header= {}
+    header['USER-AGENT'] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0"
+    return header
+    
+
 def get_random_proxy():
     '''
-    returns random single proxy
+    returns random  proxy from list of proxies
+    To do:
+        maintain list of proxies or use other service like proxymesh
     '''
     random_proxy = {}
-    random_ip_port = PROXIES[random.randint(0, len(PROXIES)-1)]
+    random_ip_port = '192.168.1.113:8080'
     random_proxy['http'] = 'http://'+random_ip_port
     random_proxy['https'] = 'http://'+random_ip_port
     return random_proxy
 
-
-def get_random_header():
+def get_page_html(url):
     '''
-    return headers with random useragent
+    reads html from a give link
     '''
-    header = {}
-    random_digit = random.randint(0, len(USER_AGENTS)-1)
-    header['User-Agent'] =  USER_AGENTS[random_digit]
-    return header
+    header = get_random_header()
+    resp = request.get(url, headers=headers)
+    return resp.content
 
 def parse_page(club):
-    ''' parses club url '''
+    ''' 
+    finds club url 
+    '''
     print("Working on Club: %s" % club.get('name'))
-    header = get_random_header()
-    resp = requests.get(club.get('url'), headers=header)
-    page = html.fromstring(resp.content)
+    url = club.get('url')
+    resp_content = get_page_html(url)
+    page = html.fromstring(resp_content)
     results = page.xpath(CONFIG['results'])
     results_sel = [html.fromstring(html.tostring(_res)) for _res in results]
     headlines = []
