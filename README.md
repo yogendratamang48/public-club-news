@@ -1,7 +1,7 @@
 # Club news extractor
 # Installation
 - Use python3  
->`pip install req.txt`
+>`pip install -r req.txt`
 # How to run ?
 >`python crawler.py`  
 - This will start crawler and download data in `data` folder with name that of `club name`
